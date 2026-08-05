@@ -1,0 +1,50 @@
+# Meleh Studio Social Agent -- own compose stack, own Postgres.
+#
+# This project is fully independent: it does not join any network or
+# volume belonging to Jarvis (or anything else on this VPS), and it will
+# never assume another stack exists. Service containers for
+# content_agent / poster_agent / telegram_bot get added here in later
+# build steps -- for step (a) this file only stands up the database.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: meleh_social_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      # Persistent data, isolated under its own named volume.
+      - meleh_social_pgdata:/var/lib/postgresql/data
+      # Files here run once, automatically, the FIRST time the volume is
+      # created (empty data dir), in filename order. That's how
+      # 001_create_content_queue.sql gets applied on `docker compose up`.
+      # If you add later migration files, note they won't auto-run against
+      # an already-initialized volume -- see README.md for how to apply
+      # those manually.
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - meleh_social_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # Not published to the host by default -- other containers in this
+    # compose project reach it over meleh_social_net by service name (db).
+    # Uncomment below only if you need a one-off psql session from the
+    # VPS host itself, and keep it bound to localhost (never 0.0.0.0):
+    # ports:
+    #   - "127.0.0.1:5433:5432"
+
+networks:
+  meleh_social_net:
+    name: meleh_social_net
+
+volumes:
+  meleh_social_pgdata:
+    name: meleh_social_pgdata
