@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mills OS CRM V1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo-block">
+        <div class="logo-ring">
+          <div class="logo">M</div>
+        </div>
+        <div>
+          <div class="title">Mills OS</div>
+          <div class="subtitle">Command Center CRM</div>
+        </div>
+      </div>
+
+      <section class="workspace-card">
+        <span class="eyebrow">Active Business</span>
+        <div class="workspace-name" id="activeBusinessName">Meleh Studio</div>
+        <div class="workspace-desc">Website, Facebook, Instagram, WhatsApp, and call leads land here.</div>
+      </section>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="inbox">Inbox</button>
+        <button class="nav-item" data-view="pipeline">Pipeline</button>
+        <button class="nav-item" data-view="ai">AI Hub</button>
+        <button class="nav-item" data-view="calls">Call Log</button>
+        <button class="nav-item" data-view="settings">Settings</button>
+      </nav>
+
+      <section class="metrics">
+        <div class="metric">
+          <span>Today</span>
+          <strong>14 leads</strong>
+        </div>
+        <div class="metric">
+          <span>Unread</span>
+          <strong>5</strong>
+        </div>
+        <div class="metric">
+          <span>Open calls</span>
+          <strong>2</strong>
+        </div>
+      </section>
+
+      <section class="sidebar-cta">
+        <div class="cta-label">AI operating layer</div>
+        <div class="cta-text">Drafts replies, qualifies leads, and hands off cleanly when needed.</div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="search">Search contacts, businesses, sources, tags...</div>
+        </div>
+        <div class="topbar-right">
+          <div class="business-switcher">
+            <span>Workspace</span>
+            <select id="businessSwitcher">
+              <option value="Meleh Studio">Meleh Studio</option>
+              <option value="Millswork">Millswork</option>
+            </select>
+          </div>
+          <button class="ghost">+ Add Business</button>
+          <button class="primary">+ New Lead</button>
+        </div>
+      </header>
+
+      <section class="views">
+        <section class="panel inbox-view active" data-panel="inbox">
+          <div class="panel-header">
+            <div>
+              <h2>Unified Inbox</h2>
+              <p>Website, Facebook, Instagram, WhatsApp, and calls in one queue.</p>
+            </div>
+            <div class="chips">
+              <span class="chip active">All 18</span>
+              <span class="chip">Unread 5</span>
+              <span class="chip">High Priority 3</span>
+            </div>
+          </div>
+
+          <div class="inbox-grid">
+            <div class="conversation-list">
+              <article class="conversation-card selected" data-contact="rachel">
+                <div class="row">
+                  <span class="channel whatsapp">WhatsApp</span>
+                  <span class="time">10:42 AM</span>
+                </div>
+                <h3>Rachel Ben-Ami</h3>
+                <p>Hi! I’d like a custom piece for our dining room. Can you help?</p>
+                <div class="meta-row">
+                  <span class="tag">Custom Quote Requested</span>
+                  <span class="dot priority"></span>
+                </div>
+              </article>
+
+              <article class="conversation-card" data-contact="david">
+                <div class="row">
+                  <span class="channel website">Website</span>
+                  <span class="time">9:15 AM</span>
+                </div>
+                <h3>David Cohen</h3>
+                <p>Interested in a piece from your Shema collection.</p>
+                <div class="meta-row">
+                  <span class="tag">Product Inquiry</span>
+                </div>
+              </article>
+
+              <article class="conversation-card" data-contact="sarah">
+                <div class="row">
+                  <span class="channel meta">Meta</span>
+                  <span class="time">Yesterday</span>
+                </div>
+                <h3>Sarah Levi</h3>
+                <p>Do you ship to Canada?</p>
+                <div class="meta-row">
+                  <span class="tag muted">Waiting on Info</span>
+                </div>
+              </article>
+
+              <article class="conversation-card" data-contact="yael">
+                <div class="row">
+                  <span class="channel phone">Phone</span>
+                  <span class="time">Yesterday</span>
+                </div>
+                <h3>Yael Fridman</h3>
+                <p>Missed call: family plaque for a milestone birthday.</p>
+                <div class="meta-row">
+                  <span class="tag muted">Missed Call</span>
+                </div>
+              </article>
+            </div>
+
+            <div class="thread">
+              <div class="thread-header">
+                <div>
+                  <div class="title-row">
+                    <h3 id="contactName">Rachel Ben-Ami</h3>
+                    <span class="channel whatsapp">WhatsApp</span>
+                    <span class="tag">Custom Quote Requested</span>
+                  </div>
+                  <p id="contactSummary">Assigned to Miriam Cohen · High priority · Quote not yet sent</p>
+                </div>
+                <button class="handoff">Human Handoff</button>
+              </div>
+
+              <div class="thread-body">
+                <div class="message customer">
+                  <p>Hi! I’d like a custom piece for our dining room. We’re looking for a modern take on Birkat HaBayit. Can you share options and pricing?</p>
+                  <span>10:42 AM</span>
+                </div>
+                <div class="message ai">
+                  <div class="ai-label">AI Draft - Qualified</div>
+                  <p>Shalom Rachel, that sounds beautiful. I’d be happy to help create a custom piece for your space. Before we quote accurately, could you share preferred size, finish, deadline, and whether you have a reference photo or inspiration?</p>
+                  <div class="action-row">
+                    <button class="ghost">Ask Follow-up</button>
+                    <button class="ghost">Qualify Lead</button>
+                    <button class="ghost">Escalate to Human</button>
+                    <button class="primary small">Send Suggestion</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="composer">
+                <div class="composer-tabs">
+                  <button class="chip active">Reply</button>
+                  <button class="chip">Note</button>
+                </div>
+                <div class="composer-box">AI or manual reply goes here...</div>
+                <div class="composer-actions">
+                  <span>Attach</span>
+                  <span>AI Assist</span>
+                  <button class="primary small">Send</button>
+                </div>
+              </div>
+            </div>
+
+            <aside class="details">
+              <div class="detail-card">
+                <h3>Lead Details</h3>
+                <dl>
+                  <div><dt>Name</dt><dd id="detailName">Rachel Ben-Ami</dd></div>
+                  <div><dt>Phone</dt><dd>+1 (646) 555-2789</dd></div>
+                  <div><dt>Email</dt><dd>rachel.benami@gmail.com</dd></div>
+                  <div><dt>Source</dt><dd>WhatsApp</dd></div>
+                  <div><dt>Business</dt><dd id="detailBusiness">Meleh Studio</dd></div>
+                  <div><dt>Stage</dt><dd id="detailStage">Custom Quote Requested</dd></div>
+                  <div><dt>Priority</dt><dd>High</dd></div>
+                  <div><dt>Last Touch</dt><dd>Today, 10:42 AM</dd></div>
+                  <div><dt>Next Follow-up</dt><dd>May 23, 2025 11:00 AM</dd></div>
+                </dl>
+              </div>
+
+              <div class="detail-card">
+                <h3>AI Actions</h3>
+                <div class="ai-state">
+                  <span class="ai-pill active">Qualified</span>
+                  <span class="ai-pill">Human handoff ready</span>
+                </div>
+                <button class="tool">Draft a reply</button>
+                <button class="tool">Ask qualification question</button>
+                <button class="tool">Summarize thread</button>
+                <button class="tool">Escalate to human</button>
+                <button class="tool">Create follow-up</button>
+              </div>
+
+              <div class="detail-card">
+                <h3>Reference</h3>
+                <div class="ref-image"></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="panel pipeline-view" data-panel="pipeline">
+          <div class="panel-header">
+            <div>
+              <h2>Pipeline</h2>
+              <p>Simple status board for lead movement.</p>
+            </div>
+          </div>
+          <div class="pipeline-grid">
+            <div class="column">
+              <h3>New Lead <span>5</span></h3>
+              <div class="lead-mini">Avi Goldberg <span>Website</span></div>
+              <div class="lead-mini">Shira Katz <span>Meta</span></div>
+            </div>
+            <div class="column">
+              <h3>Product Inquiry <span>7</span></h3>
+              <div class="lead-mini">David Cohen <span>Website</span></div>
+              <div class="lead-mini">Sarah Levi <span>Meta</span></div>
+            </div>
+            <div class="column active">
+              <h3>Custom Quote Requested <span>6</span></h3>
+              <div class="lead-mini highlight">Rachel Ben-Ami <span>WhatsApp</span></div>
+              <div class="lead-mini">Moshe & Rivka <span>WhatsApp</span></div>
+            </div>
+            <div class="column">
+              <h3>Waiting on Info <span>4</span></h3>
+              <div class="lead-mini">Yael Fridman <span>Phone</span></div>
+              <div class="lead-mini">Eitan Malka <span>Meta</span></div>
+            </div>
+            <div class="column">
+              <h3>Quote Sent <span>5</span></h3>
+              <div class="lead-mini">Noam & Dvorah <span>Website</span></div>
+            </div>
+            <div class="column">
+              <h3>Won <span>8</span></h3>
+              <div class="lead-mini">Avi & Miriam <span>WhatsApp</span></div>
+            </div>
+            <div class="column">
+              <h3>Lost <span>2</span></h3>
+              <div class="lead-mini">Tamar Weiss <span>Website</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel ai-view" data-panel="ai">
+          <div class="panel-header">
+            <div>
+              <h2>AI Hub</h2>
+              <p>AI is part of the operating layer, not an afterthought.</p>
+            </div>
+          </div>
+          <div class="ai-layout">
+            <div class="ai-card">
+              <h3>Response Tools</h3>
+              <button class="tool">Draft Reply</button>
+              <button class="tool">Suggest Questions</button>
+              <button class="tool">Summarize Thread</button>
+              <button class="tool">Translate</button>
+            </div>
+            <div class="ai-card">
+              <h3>Guardrails</h3>
+              <ul>
+                <li>Ask for qualification details on custom commissions.</li>
+                <li>Escalate pricing edge cases to a human.</li>
+                <li>Keep tone premium, concise, and helpful.</li>
+                <li>Use AI as an assistant, not a replacement.</li>
+              </ul>
+            </div>
+            <div class="ai-card">
+              <h3>Automation Notes</h3>
+              <div class="note-box">Website lead arrives → create contact → classify source → draft reply → update pipeline stage.</div>
+              <div class="note-box">Meta/WhatsApp message arrives → attach to conversation → suggest response → hand off if needed.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel calls-view" data-panel="calls">
+          <div class="panel-header">
+            <div>
+              <h2>Call Log</h2>
+              <p>Missed calls and inbound calls become actionable records.</p>
+            </div>
+          </div>
+          <div class="call-list">
+            <div class="call-card">
+              <div class="row">
+                <strong>Yael Fridman</strong>
+                <span class="call-badge missed">Missed</span>
+              </div>
+              <p>Asked about a plaque for a birthday gift. Callback needed.</p>
+            </div>
+            <div class="call-card">
+              <div class="row">
+                <strong>David Cohen</strong>
+                <span class="call-badge inbound">Inbound</span>
+              </div>
+              <p>Requested product sizing and shipping details.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel settings-view" data-panel="settings">
+          <div class="panel-header">
+            <div>
+              <h2>Settings</h2>
+              <p>Minimal now, expandable later.</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <div class="settings-card">
+              <h3>Businesses</h3>
+              <p>Manage Meleh Studio, Millswork, and future workspaces here.</p>
+            </div>
+            <div class="settings-card">
+              <h3>Channels</h3>
+              <p>Connect website forms, chat, Meta, WhatsApp, and call routing.</p>
+            </div>
+            <div class="settings-card">
+              <h3>AI</h3>
+              <p>Define tone, handoff rules, and qualification behavior.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

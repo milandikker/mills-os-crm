@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mills OS CRM Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <div class="brand-name">Mills OS</div>
+          <div class="brand-sub">Multi-business CRM</div>
+        </div>
+      </div>
+
+      <div class="workspace-switcher">
+        <div class="sidebar-label">Workspace</div>
+        <div class="workspace-name">Meleh Studio</div>
+        <div class="workspace-note">Switch brands without changing the core system.</div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-item active" href="#">Inbox</a>
+        <a class="nav-item" href="#">Leads</a>
+        <a class="nav-item" href="#">Pipeline</a>
+        <a class="nav-item" href="#">Automations</a>
+        <a class="nav-item" href="#">AI Hub</a>
+        <a class="nav-item" href="#">Settings</a>
+      </nav>
+
+      <div class="sidebar-card">
+        <div class="sidebar-label">Today</div>
+        <div class="sidebar-value">14 new conversations</div>
+        <div class="sidebar-note">Website, Meta, and WhatsApp sources unified.</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">Search leads, businesses, messages, notes...</div>
+        <div class="topbar-actions">
+          <button class="primary">+ New Lead</button>
+          <button class="secondary">+ Add Business</button>
+          <div class="avatar">MD</div>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <div class="panel inbox">
+          <div class="panel-head">
+            <h2>Conversations</h2>
+            <div class="chips">
+              <span class="chip active">All 18</span>
+              <span class="chip">Unread 5</span>
+              <span class="chip">Mentions 2</span>
+            </div>
+          </div>
+
+          <div class="thread-list">
+            <article class="thread selected">
+              <div class="thread-meta">
+                <span class="channel whatsapp">WhatsApp</span>
+                <span class="time">10:42 AM</span>
+              </div>
+              <h3>Rachel Ben-Ami</h3>
+              <p>Hi! I’d like a custom piece for our dining room. Can you help?</p>
+              <span class="badge">Custom Quote Requested</span>
+            </article>
+
+            <article class="thread">
+              <div class="thread-meta">
+                <span class="channel website">Website</span>
+                <span class="time">9:15 AM</span>
+              </div>
+              <h3>David Cohen</h3>
+              <p>Interested in a piece from your Shema collection.</p>
+              <span class="badge">Product Inquiry</span>
+            </article>
+
+            <article class="thread">
+              <div class="thread-meta">
+                <span class="channel meta">Meta</span>
+                <span class="time">Yesterday</span>
+              </div>
+              <h3>Sarah Levi</h3>
+              <p>Do you ship to Canada?</p>
+              <span class="badge muted">Waiting on Info</span>
+            </article>
+          </div>
+        </div>
+
+        <div class="panel conversation">
+          <div class="conversation-head">
+            <div>
+              <div class="title-row">
+                <h2>Rachel Ben-Ami</h2>
+                <span class="channel whatsapp">WhatsApp</span>
+                <span class="badge">Custom Quote Requested</span>
+              </div>
+              <p class="subtitle">Assigned to Miriam Cohen</p>
+            </div>
+            <button class="handoff">Human Handoff</button>
+          </div>
+
+          <div class="message message-customer">
+            <div class="bubble">
+              Hi! I’d like a custom piece for our dining room. We’re looking for a modern take on Birkat HaBayit.
+              Can you share options and pricing?
+            </div>
+            <div class="stamp">10:42 AM</div>
+          </div>
+
+          <div class="message message-ai">
+            <div class="ai-label">AI Assistant Draft</div>
+            <div class="bubble">
+              Shalom Rachel,
+              <br><br>
+              That sounds beautiful. I’d be happy to help create a custom piece for your space.
+              To get started, could you share:
+              <ul>
+                <li>Preferred size</li>
+                <li>Wood / finish preferences</li>
+                <li>Any style inspiration you like</li>
+              </ul>
+              I’ve attached a few reference examples so we can refine the direction.
+            </div>
+            <div class="message-actions">
+              <button class="secondary">Suggest Reply</button>
+              <button class="primary small">Send Suggestion</button>
+            </div>
+          </div>
+
+          <div class="composer">
+            <div class="composer-tabs">
+              <span class="chip active">Reply</span>
+              <span class="chip">Note</span>
+            </div>
+            <div class="composer-box">Type your message...</div>
+            <div class="composer-actions">
+              <span>✎</span>
+              <span>☺</span>
+              <span>＋</span>
+              <button class="primary small">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel details">
+          <div class="panel-head">
+            <h2>Lead Details</h2>
+          </div>
+
+          <dl class="details-list">
+            <div><dt>Name</dt><dd>Rachel Ben-Ami</dd></div>
+            <div><dt>Phone</dt><dd>+1 (646) 555-2789</dd></div>
+            <div><dt>Email</dt><dd>rachel.benami@gmail.com</dd></div>
+            <div><dt>Source</dt><dd>WhatsApp</dd></div>
+            <div><dt>Brand</dt><dd>Meleh Studio</dd></div>
+            <div><dt>Stage</dt><dd>Custom Quote Requested</dd></div>
+            <div><dt>Priority</dt><dd>High</dd></div>
+            <div><dt>Last Touch</dt><dd>Today, 10:42 AM</dd></div>
+            <div><dt>Next Follow-Up</dt><dd>May 23, 2025 11:00 AM</dd></div>
+            <div><dt>Tags</dt><dd>Custom, Birkat HaBayit, Dining Room</dd></div>
+          </dl>
+
+          <div class="ref-card">
+            <div class="ref-head">
+              <h3>Reference Photo</h3>
+              <a href="#">View all</a>
+            </div>
+            <div class="photo"></div>
+          </div>
+
+          <div class="ai-box">
+            <div class="ai-title">AI Actions</div>
+            <button>Qualify Lead</button>
+            <button>Summarize Thread</button>
+            <button>Create Follow-up</button>
+            <button>Draft Cross-Channel Reply</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="pipeline panel">
+        <div class="panel-head">
+          <h2>Pipeline Overview</h2>
+          <div class="chips">
+            <span class="chip active">Meleh Studio</span>
+            <span class="chip">Millswork</span>
+          </div>
+        </div>
+        <div class="columns">
+          <div class="column">
+            <h3>New Lead <span>5</span></h3>
+            <div class="card small">Avi Goldberg<br><span>Website</span></div>
+            <div class="card small">Shira Katz<br><span>Meta</span></div>
+          </div>
+          <div class="column">
+            <h3>Product Inquiry <span>7</span></h3>
+            <div class="card small">David Cohen<br><span>Website</span></div>
+            <div class="card small">Sarah Levi<br><span>Meta</span></div>
+          </div>
+          <div class="column active">
+            <h3>Custom Quote Requested <span>6</span></h3>
+            <div class="card small highlight">Rachel Ben-Ami<br><span>WhatsApp</span></div>
+            <div class="card small">Moshe & Rivka<br><span>WhatsApp</span></div>
+          </div>
+          <div class="column">
+            <h3>Waiting on Info <span>4</span></h3>
+            <div class="card small">Yael Fridman<br><span>Website</span></div>
+            <div class="card small">Eitan Malka<br><span>Meta</span></div>
+          </div>
+          <div class="column">
+            <h3>Quote Sent <span>5</span></h3>
+            <div class="card small">Noam & Dvorah<br><span>Website</span></div>
+          </div>
+          <div class="column">
+            <h3>Won <span>8</span></h3>
+            <div class="card small">Avi & Miriam<br><span>WhatsApp</span></div>
+          </div>
+          <div class="column">
+            <h3>Lost <span>2</span></h3>
+            <div class="card small">Tamar Weiss<br><span>Website</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

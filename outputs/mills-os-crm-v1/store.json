@@ -1,0 +1,22 @@
+{
+  "businesses": [
+    {
+      "id": "meleh-studio",
+      "name": "Meleh Studio",
+      "slug": "meleh-studio"
+    },
+    {
+      "id": "millswork",
+      "name": "Millswork",
+      "slug": "millswork"
+    }
+  ],
+  "contacts": [],
+  "conversations": [],
+  "messages": [],
+  "leads": [],
+  "callLogs": [],
+  "tasks": [],
+  "attachments": [],
+  "automationEvents": []
+}
