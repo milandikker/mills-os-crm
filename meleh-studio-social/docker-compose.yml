@@ -58,6 +58,30 @@ services:
     networks:
       - meleh_social_net
 
+  content_agent:
+    build: .
+    container_name: meleh_social_content_agent
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      CONTENT_STUDIO_UPLOAD_DIR: /app/uploads
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "content_agent.app:app"]
+    volumes:
+      # Uploaded media, isolated under its own named volume so it survives
+      # rebuilds/restarts.
+      - meleh_social_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - meleh_social_net
+    # Bound to localhost only, same pattern n8n uses on this VPS -- view it
+    # via an SSH tunnel (see README) rather than exposing it publicly.
+    ports:
+      - "127.0.0.1:8000:8000"
+
 networks:
   meleh_social_net:
     name: meleh_social_net
@@ -65,3 +89,5 @@ networks:
 volumes:
   meleh_social_pgdata:
     name: meleh_social_pgdata
+  meleh_social_uploads:
+    name: meleh_social_uploads

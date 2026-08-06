@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+
+<nav class="tabs">
+  {% for tab in ["pending", "posted", "rejected", "all"] %}
+    <a href="{{ url_for('index', status=tab) }}"
+       class="{{ 'active' if tab == active_status else '' }}">{{ tab | capitalize }}</a>
+  {% endfor %}
+</nav>
+
+{% if not items %}
+  <p class="empty">Nothing here yet.</p>
+{% endif %}
+
+<div class="grid">
+  {% for item in items %}
+    <div class="card">
+      <div class="card-header">
+        <span class="platform">{{ item.platform }}</span>
+        <span class="content-type">{{ item.content_type }}</span>
+        <span class="status status-{{ item.status }}">{{ item.status }}</span>
+      </div>
+
+      {% if item.media_url %}
+        {% if item.media_url.startswith('/media/') %}
+          {% if item.media_url.lower().endswith(('.mp4', '.mov')) %}
+            <video controls src="{{ item.media_url }}"></video>
+          {% else %}
+            <img src="{{ item.media_url }}" alt="">
+          {% endif %}
+        {% else %}
+          <p class="media-link"><a href="{{ item.media_url }}" target="_blank" rel="noopener">{{ item.media_url }}</a></p>
+        {% endif %}
+      {% endif %}
+      {% if item.media_note %}
+        <p class="media-note">{{ item.media_note }}</p>
+      {% endif %}
+
+      <p class="caption" id="caption-{{ item.id }}">{{ item.caption }}</p>
+      <button type="button" class="copy-btn" data-target="caption-{{ item.id }}">Copy caption</button>
+
+      <p class="meta">#{{ item.id }} &middot; created {{ item.created_at.strftime('%b %-d, %I:%M %p') }}</p>
+
+      {% if item.status == "pending" %}
+        <div class="actions">
+          <form method="post" action="{{ url_for('mark_posted', item_id=item.id) }}">
+            <button type="submit" class="button posted-btn">I posted this &rarr; Mark posted</button>
+          </form>
+          <form method="post" action="{{ url_for('mark_rejected', item_id=item.id) }}">
+            <button type="submit" class="button reject-btn">Reject</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+document.querySelectorAll(".copy-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var text = document.getElementById(btn.dataset.target).innerText;
+    navigator.clipboard.writeText(text).then(function () {
+      var original = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(function () { btn.textContent = original; }, 1500);
+    });
+  });
+});
+</script>
+{% endblock %}

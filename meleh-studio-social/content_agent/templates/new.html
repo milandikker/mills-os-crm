@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+
+<form method="post" enctype="multipart/form-data" class="new-form">
+  <label>
+    Platform
+    <select name="platform" id="platform" required>
+      <option value="" disabled selected>Choose one</option>
+      {% for platform in platform_content_types %}
+        <option value="{{ platform }}">{{ platform | capitalize }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>
+    Content type
+    <select name="content_type" id="content_type" required>
+      <option value="" disabled selected>Choose a platform first</option>
+    </select>
+  </label>
+
+  <label>
+    Caption
+    <textarea name="caption" rows="6" required placeholder="Write the caption..."></textarea>
+  </label>
+
+  <label>
+    Upload media (image or video)
+    <input type="file" name="media_file" accept="image/*,video/mp4,video/quicktime">
+  </label>
+
+  <p class="or-divider">-- or --</p>
+
+  <label>
+    Paste a media URL instead
+    <input type="url" name="media_url" placeholder="https://...">
+  </label>
+
+  <label>
+    Media note <span class="hint">(optional, e.g. "[video would go here]")</span>
+    <input type="text" name="media_note">
+  </label>
+
+  <button type="submit" class="button">Save draft</button>
+</form>
+
+<script>
+var contentTypesByPlatform = {{ platform_content_types | tojson }};
+var platformSelect = document.getElementById("platform");
+var contentTypeSelect = document.getElementById("content_type");
+
+platformSelect.addEventListener("change", function () {
+  var options = contentTypesByPlatform[platformSelect.value] || [];
+  contentTypeSelect.innerHTML = "";
+  options.forEach(function (value) {
+    var opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    contentTypeSelect.appendChild(opt);
+  });
+});
+</script>
+{% endblock %}

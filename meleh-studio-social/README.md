@@ -161,11 +161,59 @@ marks a row `posted`; a forced failure correctly cycles a row through
 `approved -> retry 1 -> retry 2 -> failed` and then the agent stops
 touching it.
 
+## Status: step (c) v1 complete -- Content Agent (manual dashboard)
+
+Meta/TikTok API approval is pending, so nothing can auto-publish for
+real yet. Rather than build the originally-planned automated daily
+generator first, step (c) v1 is a small web dashboard
+(`content_agent/app.py`, Flask) so posting can start now, by hand:
+
+- Write a caption, upload media (or paste a URL), save as a draft
+  (`pending`).
+- Review drafts in the dashboard, copy the caption, publish it yourself
+  in the Instagram/TikTok app.
+- Come back and click "Mark posted" (or "Reject").
+
+Deliberately never touches `approved` -- the Poster Agent polls for
+`approved` rows and will (stub-)"publish" and mark them `posted` on its
+own within the hour. If this dashboard used `approved` for "ready to
+post", a row would flip to `posted` before you'd actually posted it
+anywhere real. So `approved` stays reserved for later, when an automated
+generator + Telegram review step feed the real Poster Agent.
+
+Basic-auth protected (`CONTENT_STUDIO_USERNAME` / `_PASSWORD` in `.env`).
+Bound to `127.0.0.1:8000` only, same pattern as n8n on this VPS -- not
+exposed publicly by default.
+
+### Try it
+
+```sh
+cd meleh-studio-social
+docker compose up -d --build   # now also builds & starts content_agent
+```
+
+View it by tunneling from your own machine (don't expose 8000 publicly):
+
+```sh
+ssh -L 8000:127.0.0.1:8000 root@<server-ip>
+```
+
+Then open `http://127.0.0.1:8000` in your browser and log in with the
+`CONTENT_STUDIO_USERNAME` / `CONTENT_STUDIO_PASSWORD` from `.env`.
+
+I built and manually verified this whole flow locally before pushing:
+auth-gates every route (401 without credentials), draft creation via
+both pasted URL and file upload, the uploaded file is served back
+correctly, empty-caption submissions are rejected without creating a
+row, and "Mark posted" updates `status`/`posted_at` in the database.
+
 ## Next steps
 
-- **(c) Content Agent** -- mock product list + brand-voice captions,
-  writes `pending` rows daily.
-- **(d) Telegram Review Bot** -- Approve/Edit/Reject + 4h auto-approve.
+- **(d) Telegram Review Bot** -- Approve/Edit/Reject + 4h auto-approve,
+  for when an automated generator (rather than manual entry) starts
+  writing `pending` rows.
 - **(e) TODO stubs** -- OpenAI image gen, Higgsfield video gen, Meta Graph
   API publishing (`poster_agent/publishers/meta.py`), TikTok publishing
-  (`poster_agent/publishers/tiktok.py`).
+  (`poster_agent/publishers/tiktok.py`). Once Meta/TikTok approval comes
+  through and these go live, the dashboard's "Mark posted" step can be
+  retired in favor of the real automated Poster Agent.
