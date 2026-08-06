@@ -41,8 +41,11 @@ meleh-studio-social/
   migrations/              SQL schema (applied automatically on first `up`)
   shared/                  db.py -- connection helper used by all agents
   scripts/                 one-off utility/verification scripts
+  Dockerfile               shared image; each service just runs a
+                           different module (see docker-compose.yml)
   content_agent/           [step c -- not built yet]
-  poster_agent/            [step b -- not built yet]
+  poster_agent/            polls for 'approved' rows, stub-publishes,
+                           marks 'posted', retries on failure (step b)
   telegram_bot/             [step d -- not built yet]
   BRAND_VOICE.md            [step c -- brand voice guide, editable by you]
 ```
@@ -106,12 +109,63 @@ it won't run automatically -- apply it by hand with
 This project's schema is fully specified up front, so we don't expect to
 need this, but it's documented in case a later step calls for a tweak.
 
+## Status: step (b) complete -- Poster Agent
+
+`poster_agent/main.py` polls for `status = 'approved'` rows and, for each
+one, calls a stub publisher (`poster_agent/publishers/meta.py` for
+Instagram, `tiktok.py` for TikTok) that just logs what it *would* post.
+
+Error handling / retries:
+- Publish succeeds -> row marked `posted`, `posted_at` set.
+- Publish raises -> `last_error` recorded, `retry_count` incremented,
+  and the row goes back to `approved` so the *next* hourly run retries
+  it -- up to `POSTER_MAX_RETRIES` (default 3) attempts, after which it's
+  left `failed` for good (the agent stops picking it up; a human can
+  requeue it by hand later if needed).
+- `FOR UPDATE SKIP LOCKED` on the fetch query means two overlapping runs
+  would split the work instead of double-publishing the same row.
+
+Run modes: `python -m poster_agent.main` loops forever (one pass every
+`POSTER_INTERVAL_SECONDS`, default 3600s); `python -m poster_agent.main
+--once` runs a single pass and exits -- that's what docker-compose isn't
+using yet (the service runs the loop), but it's the easiest way to test
+by hand.
+
+### Try it
+
+```sh
+cd meleh-studio-social
+docker compose up -d --build   # now also builds & starts poster_agent
+
+# insert a fake approved row to see it get picked up
+docker compose exec db psql -U meleh_social -d meleh_social -c "
+INSERT INTO content_queue (platform, content_type, media_url, caption, status, review_deadline)
+VALUES ('instagram', 'static', '/media/placeholder.jpg', 'Test caption', 'approved', now() + interval '4 hours');
+"
+
+docker compose logs -f poster_agent
+```
+
+Within one interval (or restart the container to trigger an immediate
+pass: `docker compose restart poster_agent`) you should see a log line
+like `[meta stub] Would publish static to Instagram | ...` followed by
+`id=1 -> posted`. Confirm in the DB:
+
+```sh
+docker compose exec db psql -U meleh_social -d meleh_social -c \
+  "SELECT id, status, posted_at FROM content_queue;"
+```
+
+I verified this exact flow locally before pushing: happy-path publish
+marks a row `posted`; a forced failure correctly cycles a row through
+`approved -> retry 1 -> retry 2 -> failed` and then the agent stops
+touching it.
+
 ## Next steps
 
-- **(b) Poster Agent** -- build against this schema, test by manually
-  inserting a fake `approved` row.
 - **(c) Content Agent** -- mock product list + brand-voice captions,
   writes `pending` rows daily.
 - **(d) Telegram Review Bot** -- Approve/Edit/Reject + 4h auto-approve.
 - **(e) TODO stubs** -- OpenAI image gen, Higgsfield video gen, Meta Graph
-  API publishing, TikTok publishing.
+  API publishing (`poster_agent/publishers/meta.py`), TikTok publishing
+  (`poster_agent/publishers/tiktok.py`).

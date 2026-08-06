@@ -41,6 +41,23 @@ services:
     # ports:
     #   - "127.0.0.1:5433:5432"
 
+  poster_agent:
+    build: .
+    container_name: meleh_social_poster_agent
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Inside compose, "db" is the Postgres service's hostname on the
+      # shared network -- overrides whatever POSTGRES_HOST is in .env.
+      POSTGRES_HOST: db
+    command: ["python", "-m", "poster_agent.main"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - meleh_social_net
+
 networks:
   meleh_social_net:
     name: meleh_social_net
