@@ -207,14 +207,59 @@ both pasted URL and file upload, the uploaded file is served back
 correctly, empty-caption submissions are rejected without creating a
 row, and "Mark posted" updates `status`/`posted_at` in the database.
 
+## Status: step (d) complete -- Telegram Review Bot
+
+`telegram_bot/main.py` is a mobile-friendly companion to the Content
+Studio dashboard -- same `content_queue` rows, reachable from your phone
+without needing the SSH tunnel the dashboard requires.
+
+- The moment a draft is created (`pending`, not yet sent), the bot
+  messages you the caption + media with **Posted** / **Reject** buttons.
+- Tapping a button updates the database directly and edits the message
+  to show the outcome.
+- If you haven't responded by `review_deadline` (4h after creation), it
+  sends exactly one reminder ping -- never an automatic status change.
+
+Same safety rule as the dashboard: it never touches `approved`, for the
+same reason -- the Poster Agent polls for `approved` rows and would
+stub-"publish" and mark one `posted` on its own, which would race ahead
+of you actually posting anything real.
+
+Requires two new nullable columns (`telegram_message_id`,
+`telegram_reminded_at`) added in
+`migrations/002_add_telegram_columns.sql` -- since the VPS's Postgres
+volume already exists, this migration needs to be applied by hand (see
+"Try it" below and the note in the migration file itself).
+
+### Try it
+
+1. Create a bot: message [@BotFather](https://t.me/BotFather) on
+   Telegram, `/newbot`, follow the prompts -- it gives you a token.
+2. Message your new bot once (anything), then find your chat ID via
+   [@userinfobot](https://t.me/userinfobot) or the `getUpdates` API.
+3. Add both to `.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+4. Apply the new migration (only needed once, since the volume already exists):
+   ```sh
+   docker compose exec -T db psql -U meleh_social -d meleh_social \
+     < migrations/002_add_telegram_columns.sql
+   ```
+5. `docker compose up -d --build` (now also builds & starts telegram_bot)
+6. Create a draft via the dashboard (or `docker compose exec db psql ...`
+   an insert like earlier steps) and confirm it lands in Telegram within
+   `TELEGRAM_POLL_INTERVAL_SECONDS` (default 60s), with working buttons.
+
+I verified the database-side logic (send-once dedup, reminder dedup,
+button actions updating status correctly, double-click safety, and
+chat-ID authorization) locally against a real Postgres with the
+Telegram API calls mocked out, since that doesn't require a live bot
+token. The actual Telegram send/receive round-trip needs your real bot
+token and chat ID to test, which only you can set up -- steps above.
+
 ## Next steps
 
-- **(d) Telegram Review Bot** -- Approve/Edit/Reject + 4h auto-approve,
-  for when an automated generator (rather than manual entry) starts
-  writing `pending` rows.
 - **(e) TODO stubs** -- OpenAI captions, Runway image/video gen (chosen
   over Higgsfield -- reliability issues seen using Higgsfield via
   ChatGPT), Meta Graph API publishing (`poster_agent/publishers/meta.py`),
   TikTok publishing (`poster_agent/publishers/tiktok.py`). Once Meta/TikTok
-  approval comes through and these go live, the dashboard's "Mark posted"
-  step can be retired in favor of the real automated Poster Agent.
+  approval comes through and these go live, the dashboard's/bot's "Mark
+  posted" step can be retired in favor of the real automated Poster Agent.

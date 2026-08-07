@@ -82,6 +82,27 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
 
+  telegram_bot:
+    build: .
+    container_name: meleh_social_telegram_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      CONTENT_STUDIO_UPLOAD_DIR: /app/uploads
+    command: ["python", "-m", "telegram_bot.main"]
+    volumes:
+      # Read-only: needs to read dashboard-uploaded media to send it to
+      # Telegram, never writes here itself.
+      - meleh_social_uploads:/app/uploads:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - meleh_social_net
+    # No published ports -- outbound-only (polls Telegram's API and the DB).
+
 networks:
   meleh_social_net:
     name: meleh_social_net
