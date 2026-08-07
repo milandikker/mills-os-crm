@@ -85,9 +85,9 @@ header a { text-decoration: none; color: inherit; }
   font-size: 0.75rem;
   text-transform: capitalize;
 }
-.status-pending { background: #fff3cd; }
-.status-posted { background: #d4edda; }
-.status-rejected { background: #f8d7da; }
+.status-pending { background: #fff3cd; color: #7a5900; }
+.status-posted { background: #d4edda; color: #14532d; }
+.status-rejected { background: #f8d7da; color: #7a1f2b; }
 
 .card img, .card video {
   width: 100%;
