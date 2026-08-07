@@ -2,8 +2,12 @@
 Stub publisher for Instagram (and Facebook) via the Meta Graph API.
 
 TODO(step e): replace this stub with real Meta Graph API calls.
-We only ever post to our own owned Page / IG Business account, so
-Standard Access is enough -- no App Review needed for this use case.
+We only ever post to our own owned Page / IG Business account. Try
+adding that account as Admin/Developer/Tester on the Meta app first --
+that path publishes without a formal App Review, and is very likely
+sufficient since we're not publishing on behalf of any third party.
+Fall back to App Review only if that role-based path proves
+insufficient (unverified either way -- confirm empirically).
 
 Real implementation will roughly be, for both static posts and Reels:
   1. POST /{ig-user-id}/media          -- create a media container

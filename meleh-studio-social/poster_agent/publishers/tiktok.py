@@ -3,11 +3,16 @@ Stub publisher for TikTok video posts.
 
 TODO(step e): replace this stub with real TikTok publishing.
 Two paths to evaluate when we get here:
-  1. TikTok Content Posting API directly (needs its own app review/audit).
+  1. TikTok Content Posting API directly -- confirmed as of 2026-08-07:
+     unaudited apps can only post PRIVATELY (visible to no one but us),
+     so this path is unusable for real marketing posts until TikTok's
+     audit clears. That audit timeline is the real bottleneck here.
   2. Higgsfield's native TikTok tools (tiktok_connect / tiktok_publish /
-     tiktok_publish_status) -- likely the simpler path since Higgsfield is
-     already generating the video, and its TikTok connect flow skips us
-     having to build + maintain our own TikTok API integration.
+     tiktok_publish_status) -- try this FIRST. If Higgsfield's own app is
+     already TikTok-audited, publishing through their connected-account
+     flow could let us skip TikTok's audit process entirely, not just
+     skip building our own API integration. Worth confirming with
+     Higgsfield directly before starting our own TikTok audit.
 Decide between these once we're actually ready to wire this up.
 
 Needs from .env: TIKTOK_ACCESS_TOKEN (only relevant for path 1).
