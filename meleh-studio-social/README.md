@@ -212,8 +212,9 @@ row, and "Mark posted" updates `status`/`posted_at` in the database.
 - **(d) Telegram Review Bot** -- Approve/Edit/Reject + 4h auto-approve,
   for when an automated generator (rather than manual entry) starts
   writing `pending` rows.
-- **(e) TODO stubs** -- OpenAI image gen, Higgsfield video gen, Meta Graph
-  API publishing (`poster_agent/publishers/meta.py`), TikTok publishing
-  (`poster_agent/publishers/tiktok.py`). Once Meta/TikTok approval comes
-  through and these go live, the dashboard's "Mark posted" step can be
-  retired in favor of the real automated Poster Agent.
+- **(e) TODO stubs** -- OpenAI captions, Runway image/video gen (chosen
+  over Higgsfield -- reliability issues seen using Higgsfield via
+  ChatGPT), Meta Graph API publishing (`poster_agent/publishers/meta.py`),
+  TikTok publishing (`poster_agent/publishers/tiktok.py`). Once Meta/TikTok
+  approval comes through and these go live, the dashboard's "Mark posted"
+  step can be retired in favor of the real automated Poster Agent.
