@@ -71,7 +71,9 @@ services:
     # SSH tunnel -- gunicorn was killing the worker mid-upload (WORKER
     # TIMEOUT), which is what caused both the slow-feeling saves and the
     # eventual 500 error.
-    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "180", "content_agent.app:app"]
+    # --workers 2: single worker meant a slow upload blocked every other
+    # request (even just loading the page) until it finished.
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "180", "--workers", "2", "content_agent.app:app"]
     volumes:
       # Uploaded media, isolated under its own named volume so it survives
       # rebuilds/restarts.
