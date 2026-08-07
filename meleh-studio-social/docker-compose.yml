@@ -67,7 +67,11 @@ services:
     environment:
       POSTGRES_HOST: db
       CONTENT_STUDIO_UPLOAD_DIR: /app/uploads
-    command: ["gunicorn", "--bind", "0.0.0.0:8000", "content_agent.app:app"]
+    # --timeout 180: default is 30s, too short for a media upload over the
+    # SSH tunnel -- gunicorn was killing the worker mid-upload (WORKER
+    # TIMEOUT), which is what caused both the slow-feeling saves and the
+    # eventual 500 error.
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "180", "content_agent.app:app"]
     volumes:
       # Uploaded media, isolated under its own named volume so it survives
       # rebuilds/restarts.
