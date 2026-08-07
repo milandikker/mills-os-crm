@@ -25,8 +25,10 @@
   </label>
 
   <label>
-    Upload media (image or video)
-    <input type="file" name="media_file" accept="image/*,video/mp4,video/quicktime">
+    Upload media
+    <span class="hint" id="media-hint">One video (Reel/TikTok video), or one or more photos for a carousel post</span>
+    <input type="file" name="media_file" id="media_file" accept="image/*,video/mp4,video/quicktime" multiple>
+    <span class="hint" id="file-count"></span>
   </label>
 
   <p class="or-divider">-- or --</p>
@@ -41,13 +43,15 @@
     <input type="text" name="media_note">
   </label>
 
-  <button type="submit" class="button">Save draft</button>
+  <button type="submit" class="button" id="save-btn">Save draft</button>
 </form>
 
 <script>
 var contentTypesByPlatform = {{ platform_content_types | tojson }};
 var platformSelect = document.getElementById("platform");
 var contentTypeSelect = document.getElementById("content_type");
+var mediaFileInput = document.getElementById("media_file");
+var fileCountLabel = document.getElementById("file-count");
 
 platformSelect.addEventListener("change", function () {
   var options = contentTypesByPlatform[platformSelect.value] || [];
@@ -58,6 +62,23 @@ platformSelect.addEventListener("change", function () {
     opt.textContent = value;
     contentTypeSelect.appendChild(opt);
   });
+});
+
+mediaFileInput.addEventListener("change", function () {
+  var n = mediaFileInput.files.length;
+  if (n === 0) {
+    fileCountLabel.textContent = "";
+  } else if (n === 1) {
+    fileCountLabel.textContent = "1 file selected";
+  } else {
+    fileCountLabel.textContent = n + " files selected (carousel)";
+  }
+});
+
+document.querySelector(".new-form").addEventListener("submit", function () {
+  var btn = document.getElementById("save-btn");
+  btn.disabled = true;
+  btn.textContent = "Saving... (can take a while over the tunnel for large files)";
 });
 </script>
 {% endblock %}

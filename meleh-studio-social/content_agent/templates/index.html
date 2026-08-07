@@ -21,15 +21,22 @@
         <span class="status status-{{ item.status }}">{{ item.status }}</span>
       </div>
 
-      {% if item.media_url %}
-        {% if item.media_url.startswith('/media/') %}
-          {% if item.media_url.lower().endswith(('.mp4', '.mov')) %}
-            <video controls src="{{ item.media_url }}"></video>
-          {% else %}
-            <img src="{{ item.media_url }}" alt="">
-          {% endif %}
-        {% else %}
-          <p class="media-link"><a href="{{ item.media_url }}" target="_blank" rel="noopener">{{ item.media_url }}</a></p>
+      {% if item.media_urls %}
+        <div class="media-gallery {{ 'single' if item.media_urls|length == 1 else 'carousel' }}">
+          {% for url in item.media_urls %}
+            {% if url.startswith('/media/') %}
+              {% if url.lower().endswith(('.mp4', '.mov')) %}
+                <video controls src="{{ url }}"></video>
+              {% else %}
+                <img src="{{ url }}" alt="">
+              {% endif %}
+            {% else %}
+              <p class="media-link"><a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a></p>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if item.media_urls|length > 1 %}
+          <p class="media-note">{{ item.media_urls|length }} photos (carousel)</p>
         {% endif %}
       {% endif %}
       {% if item.media_note %}

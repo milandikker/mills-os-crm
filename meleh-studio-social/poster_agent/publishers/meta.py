@@ -25,7 +25,7 @@ def publish(row):
     Returns a small result dict -- real version will return the Graph
     API's published media ID here instead of None.
     """
-    media_description = row["media_url"] or row["media_note"]
+    media_description = row["media_urls"] or row["media_note"]
     print(
         f"[meta stub] Would publish {row['content_type']} to {row['platform'].capitalize()} | "
         f"media={media_description!r} | caption={row['caption'][:60]!r}..."

@@ -14,7 +14,11 @@ that race ahead of you actually posting anything real.
 Two background jobs, both polling content_queue:
   notify_new_drafts -- sends any not-yet-sent 'pending' row to you with
                         Posted/Reject buttons, and records the Telegram
-                        message ID so it's never sent twice.
+                        message ID so it's never sent twice. A carousel
+                        (multiple photos) sends as a Telegram album,
+                        followed by a separate message carrying the
+                        caption + buttons -- Telegram's media-group API
+                        doesn't support inline keyboards at all.
   send_reminders    -- past review_deadline (4h after creation) with no
                         response yet, sends ONE reminder ping. Never an
                         automatic status change -- just a nudge.
@@ -23,7 +27,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, Update
 from telegram.ext import Application, CallbackQueryHandler, ContextTypes
 
 from shared.db import dict_cursor, get_connection
@@ -36,7 +40,7 @@ log = logging.getLogger("telegram_bot")
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHAT_ID = int(os.environ["TELEGRAM_CHAT_ID"])
 UPLOAD_DIR = os.environ.get("CONTENT_STUDIO_UPLOAD_DIR", "/app/uploads")
-POLL_INTERVAL_SECONDS = int(os.environ.get("TELEGRAM_POLL_INTERVAL_SECONDS", 60))
+POLL_INTERVAL_SECONDS = int(os.environ.get("TELEGRAM_POLL_INTERVAL_SECONDS", 15))
 
 
 def _media_path_or_url(media_url):
@@ -48,6 +52,10 @@ def _media_path_or_url(media_url):
     if media_url.startswith("/media/"):
         return os.path.join(UPLOAD_DIR, media_url.removeprefix("/media/"))
     return media_url
+
+
+def _media_paths_or_urls(media_urls):
+    return [_media_path_or_url(u) for u in (media_urls or [])]
 
 
 def _is_video(media_url):
@@ -78,15 +86,29 @@ async def notify_new_drafts(context: ContextTypes.DEFAULT_TYPE):
         rows = cur.fetchall()
 
         for item in rows:
-            media = _media_path_or_url(item["media_url"])
+            media_list = _media_paths_or_urls(item["media_urls"])
             text = _caption_text(item)
             markup = _keyboard(item["id"])
             try:
-                if media and _is_video(media):
-                    msg = await context.bot.send_video(CHAT_ID, video=media, caption=text, reply_markup=markup)
-                elif media:
-                    msg = await context.bot.send_photo(CHAT_ID, photo=media, caption=text, reply_markup=markup)
+                if not media_list:
+                    msg = await context.bot.send_message(CHAT_ID, text=text, reply_markup=markup)
+                elif len(media_list) == 1:
+                    single = media_list[0]
+                    if _is_video(single):
+                        msg = await context.bot.send_video(CHAT_ID, video=single, caption=text, reply_markup=markup)
+                    else:
+                        msg = await context.bot.send_photo(CHAT_ID, photo=single, caption=text, reply_markup=markup)
                 else:
+                    # Carousel. Telegram's send_media_group has no
+                    # reply_markup support at all -- send the album
+                    # first, then a separate message with the caption
+                    # + buttons. That second message is the one we
+                    # track/edit below.
+                    album = [
+                        InputMediaPhoto(media=open(m, "rb") if os.path.exists(m) else m)
+                        for m in media_list
+                    ]
+                    await context.bot.send_media_group(CHAT_ID, media=album)
                     msg = await context.bot.send_message(CHAT_ID, text=text, reply_markup=markup)
             except Exception:
                 log.exception("Failed to send draft #%s to Telegram", item["id"])

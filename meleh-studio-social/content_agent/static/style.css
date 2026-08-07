@@ -96,6 +96,16 @@ header a { text-decoration: none; color: inherit; }
   object-fit: cover;
 }
 
+.media-gallery.carousel {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+}
+.media-gallery.carousel img, .media-gallery.carousel video {
+  width: 160px;
+  flex: 0 0 auto;
+}
+
 .media-link a { word-break: break-all; }
 .media-note { font-style: italic; color: var(--text-muted); font-size: 0.9rem; }
 

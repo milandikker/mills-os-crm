@@ -30,16 +30,22 @@ load_dotenv()
 
 UPLOAD_DIR = os.environ.get("CONTENT_STUDIO_UPLOAD_DIR", "/app/uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "mp4", "mov"}
+MAX_CAROUSEL_IMAGES = 10
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = Flask(__name__)
 app.secret_key = os.environ["CONTENT_STUDIO_SECRET_KEY"]
 
+# 'reel'/'tiktok_video' -- exactly one video file.
+# 'static' -- one or more photos: a single photo, or a carousel when >1
+# (all three platforms support photo carousels, not just Instagram).
+VIDEO_CONTENT_TYPES = {"reel", "tiktok_video"}
+
 PLATFORM_CONTENT_TYPES = {
     "instagram": ["reel", "static"],
     "facebook": ["reel", "static"],
-    "tiktok": ["tiktok_video"],
+    "tiktok": ["tiktok_video", "static"],
 }
 
 
@@ -111,25 +117,36 @@ def new_item():
         flash("Caption is required.")
         return redirect(url_for("new_item"))
 
-    media_url = pasted_url or None
-    upload = request.files.get("media_file")
-    if upload and upload.filename:
+    uploads = [f for f in request.files.getlist("media_file") if f and f.filename]
+
+    if content_type in VIDEO_CONTENT_TYPES and len(uploads) > 1:
+        flash("Reels/TikTok videos take a single video file, not multiple.")
+        return redirect(url_for("new_item"))
+    if content_type == "static" and len(uploads) > MAX_CAROUSEL_IMAGES:
+        flash(f"Max {MAX_CAROUSEL_IMAGES} photos per carousel.")
+        return redirect(url_for("new_item"))
+
+    media_urls = []
+    for i, upload in enumerate(uploads):
         if not allowed_file(upload.filename):
             flash("Unsupported file type. Use an image (png/jpg/gif/webp) or video (mp4/mov).")
             return redirect(url_for("new_item"))
         safe_name = secure_filename(upload.filename)
-        stored_name = f"{int(time.time())}_{safe_name}"
+        stored_name = f"{int(time.time())}_{i}_{safe_name}"
         upload.save(os.path.join(UPLOAD_DIR, stored_name))
-        media_url = f"/media/{stored_name}"
+        media_urls.append(f"/media/{stored_name}")
+
+    if pasted_url:
+        media_urls.append(pasted_url)
 
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             """
             INSERT INTO content_queue
-                (platform, content_type, media_url, media_note, caption, status, review_deadline)
+                (platform, content_type, media_urls, media_note, caption, status, review_deadline)
             VALUES (%s, %s, %s, %s, %s, 'pending', now() + interval '4 hours')
             """,
-            (platform, content_type, media_url, media_note, caption),
+            (platform, content_type, media_urls, media_note, caption),
         )
         conn.commit()
 
