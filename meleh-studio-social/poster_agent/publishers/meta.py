@@ -19,7 +19,7 @@ Docs: https://developers.facebook.com/docs/instagram-platform/content-publishing
 
 
 def publish(row):
-    """Pretend to publish an Instagram static post or Reel.
+    """Pretend to publish an Instagram or Facebook static post or Reel.
 
     `row` is a dict-like content_queue row (see shared/db.py dict_cursor).
     Returns a small result dict -- real version will return the Graph
@@ -27,7 +27,7 @@ def publish(row):
     """
     media_description = row["media_url"] or row["media_note"]
     print(
-        f"[meta stub] Would publish {row['content_type']} to Instagram | "
+        f"[meta stub] Would publish {row['content_type']} to {row['platform'].capitalize()} | "
         f"media={media_description!r} | caption={row['caption'][:60]!r}..."
     )
     return {"stub": True, "platform_post_id": None}

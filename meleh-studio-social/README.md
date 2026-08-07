@@ -58,7 +58,7 @@ is the single source of truth both agents and the Telegram bot read/write.
 | column          | type        | notes                                             |
 |-----------------|-------------|----------------------------------------------------|
 | id              | bigserial   | primary key                                       |
-| platform        | text        | `instagram` \| `tiktok`                           |
+| platform        | text        | `instagram` \| `facebook` \| `tiktok`             |
 | content_type    | text        | `reel` \| `static` \| `tiktok_video`               |
 | media_url       | text        | path/URL to placeholder image (nullable)          |
 | media_note      | text        | e.g. `"[video would go here]"` (nullable)         |

@@ -33,6 +33,7 @@ INTERVAL_SECONDS = int(os.environ.get("POSTER_INTERVAL_SECONDS", 3600))
 # functions inside meta.py / tiktok.py change.
 PUBLISHERS = {
     "instagram": meta.publish,
+    "facebook": meta.publish,
     "tiktok": tiktok.publish,
 }
 

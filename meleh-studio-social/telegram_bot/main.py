@@ -56,7 +56,7 @@ def _is_video(media_url):
 
 def _keyboard(item_id):
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton("✅ Posted", callback_data=f"posted:{item_id}"),
+        InlineKeyboardButton("✅ I posted this", callback_data=f"posted:{item_id}"),
         InlineKeyboardButton("❌ Reject", callback_data=f"reject:{item_id}"),
     ]])
 

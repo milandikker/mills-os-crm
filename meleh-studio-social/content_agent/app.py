@@ -38,6 +38,7 @@ app.secret_key = os.environ["CONTENT_STUDIO_SECRET_KEY"]
 
 PLATFORM_CONTENT_TYPES = {
     "instagram": ["reel", "static"],
+    "facebook": ["reel", "static"],
     "tiktok": ["tiktok_video"],
 }
 
