@@ -20,6 +20,13 @@
   </label>
 
   <label>
+    Schedule for
+    <input type="datetime-local" id="scheduled_for_local" required>
+    <span class="hint">Shown in your local time -- the Telegram bot notifies you once this time arrives.</span>
+  </label>
+  <input type="hidden" name="scheduled_for" id="scheduled_for_hidden">
+
+  <label>
     Caption
     <textarea name="caption" rows="6" required placeholder="Write the caption..."></textarea>
   </label>
@@ -52,6 +59,16 @@ var platformSelect = document.getElementById("platform");
 var contentTypeSelect = document.getElementById("content_type");
 var mediaFileInput = document.getElementById("media_file");
 var fileCountLabel = document.getElementById("file-count");
+var scheduledLocalInput = document.getElementById("scheduled_for_local");
+var scheduledHiddenInput = document.getElementById("scheduled_for_hidden");
+
+// Default to "right now" in the browser's local time, still editable.
+(function () {
+  var now = new Date();
+  scheduledLocalInput.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+})();
 
 platformSelect.addEventListener("change", function () {
   var options = contentTypesByPlatform[platformSelect.value] || [];
@@ -76,6 +93,10 @@ mediaFileInput.addEventListener("change", function () {
 });
 
 document.querySelector(".new-form").addEventListener("submit", function () {
+  // Convert the local wall-clock time the user picked into an
+  // unambiguous UTC ISO string before it hits the server.
+  scheduledHiddenInput.value = new Date(scheduledLocalInput.value).toISOString();
+
   var btn = document.getElementById("save-btn");
   btn.disabled = true;
   btn.textContent = "Saving... (can take a while over the tunnel for large files)";

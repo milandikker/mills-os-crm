@@ -2,9 +2,9 @@
 {% block content %}
 
 <nav class="tabs">
-  {% for tab in ["pending", "posted", "rejected", "all"] %}
+  {% for tab, label in [("pending", "Scheduled"), ("posted", "Posted"), ("rejected", "Rejected"), ("all", "All")] %}
     <a href="{{ url_for('index', status=tab) }}"
-       class="{{ 'active' if tab == active_status else '' }}">{{ tab | capitalize }}</a>
+       class="{{ 'active' if tab == active_status else '' }}">{{ label }}</a>
   {% endfor %}
 </nav>
 
@@ -18,7 +18,7 @@
       <div class="card-header">
         <span class="platform">{{ item.platform }}</span>
         <span class="content-type">{{ item.content_type }}</span>
-        <span class="status status-{{ item.status }}">{{ item.status }}</span>
+        <span class="status status-{{ item.status }}">{{ 'scheduled' if item.status == 'pending' else item.status }}</span>
       </div>
 
       {% if item.media_urls %}
@@ -46,7 +46,14 @@
       <p class="caption" id="caption-{{ item.id }}">{{ item.caption }}</p>
       <button type="button" class="copy-btn" data-target="caption-{{ item.id }}">Copy caption</button>
 
-      <p class="meta">#{{ item.id }} &middot; created {{ item.created_at.strftime('%b %-d, %I:%M %p') }}</p>
+      <p class="meta">
+        #{{ item.id }}
+        {% if item.status == "pending" %}
+          &middot; scheduled for {{ item.scheduled_for.strftime('%b %-d, %I:%M %p') }}
+        {% else %}
+          &middot; created {{ item.created_at.strftime('%b %-d, %I:%M %p') }}
+        {% endif %}
+      </p>
 
       {% if item.status == "pending" %}
         <div class="actions">

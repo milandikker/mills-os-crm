@@ -11,17 +11,24 @@ Poster Agent polls for 'approved' rows and would stub-"publish" (fake)
 and mark one 'posted' on its own -- using 'approved' here would let
 that race ahead of you actually posting anything real.
 
+Supports the weekly-batch workflow: you can create a whole week's worth
+of scheduled 'pending' rows at once in the dashboard, and this bot only
+notifies you about each one once its own scheduled_for time arrives --
+not the moment it's created. That's what lets a batch sit quietly until
+each post's actual day.
+
 Two background jobs, both polling content_queue:
-  notify_new_drafts -- sends any not-yet-sent 'pending' row to you with
-                        Posted/Reject buttons, and records the Telegram
-                        message ID so it's never sent twice. A carousel
-                        (multiple photos) sends as a Telegram album,
-                        followed by a separate message carrying the
-                        caption + buttons -- Telegram's media-group API
-                        doesn't support inline keyboards at all.
-  send_reminders    -- past review_deadline (4h after creation) with no
-                        response yet, sends ONE reminder ping. Never an
-                        automatic status change -- just a nudge.
+  notify_new_drafts -- once scheduled_for <= now(), sends a not-yet-sent
+                        'pending' row to you with Posted/Reject buttons,
+                        and records the Telegram message ID so it's
+                        never sent twice. A carousel (multiple photos)
+                        sends as a Telegram album, followed by a
+                        separate message carrying the caption + buttons
+                        -- Telegram's media-group API doesn't support
+                        inline keyboards at all.
+  send_reminders    -- past review_deadline (4h after scheduled_for)
+                        with no response yet, sends ONE reminder ping.
+                        Never an automatic status change -- just a nudge.
 """
 import logging
 import os
@@ -81,7 +88,8 @@ async def notify_new_drafts(context: ContextTypes.DEFAULT_TYPE):
         cur.execute(
             "SELECT * FROM content_queue "
             "WHERE status = 'pending' AND telegram_message_id IS NULL "
-            "ORDER BY created_at ASC"
+            "AND scheduled_for <= now() "
+            "ORDER BY scheduled_for ASC"
         )
         rows = cur.fetchall()
 

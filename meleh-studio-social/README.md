@@ -255,11 +255,45 @@ Telegram API calls mocked out, since that doesn't require a live bot
 token. The actual Telegram send/receive round-trip needs your real bot
 token and chat ID to test, which only you can set up -- steps above.
 
+## Status: scheduled batch-publishing workflow
+
+Direction change: rather than an AI agent autonomously drafting content
+for review, the actual workflow is a weekly batch session -- content is
+created/selected entirely by hand (using Runway/Higgsfield/etc.
+directly), then uploaded here already-decided, each with its own
+scheduled time. Nothing needs a separate approval step since it was
+approved by being created.
+
+What changed to support this (`migrations/005_add_scheduled_for.sql`
+adds `scheduled_for` -- status stays `pending`, no enum change):
+
+- **Dashboard**: "New draft" now requires a "Schedule for" date/time
+  (defaults to now, editable). The "Scheduled" tab (renamed from
+  "Pending") lists upcoming posts soonest-first with their scheduled
+  time shown.
+- **Telegram bot**: `notify_new_drafts` only sends a post once its
+  `scheduled_for` time arrives, not the moment it's created -- that's
+  what lets a whole week's batch sit quietly until each post's actual
+  day. `review_deadline` (the reminder-ping threshold) is now computed
+  as `scheduled_for + 4h` instead of `created_at + 4h`.
+- **Poster Agent**: unchanged. Real publishing still isn't live, so
+  "I posted this" stays a manual click for now -- once step (e) wires
+  up real Meta/TikTok/Facebook calls, the Poster Agent takes over this
+  same `scheduled_for` time and publishes automatically, and the manual
+  click retires.
+
+Verified locally: a post scheduled 5 days out is correctly excluded
+from the Telegram bot's notify query, while one scheduled a few minutes
+in the past is correctly included; missing/invalid scheduled times are
+rejected without creating a row; `review_deadline` derives correctly
+from `scheduled_for`.
+
 ## Next steps
 
 - **(e) TODO stubs** -- OpenAI captions, Runway image/video gen (chosen
   over Higgsfield -- reliability issues seen using Higgsfield via
   ChatGPT), Meta Graph API publishing (`poster_agent/publishers/meta.py`),
   TikTok publishing (`poster_agent/publishers/tiktok.py`). Once Meta/TikTok
-  approval comes through and these go live, the dashboard's/bot's "Mark
-  posted" step can be retired in favor of the real automated Poster Agent.
+  approval comes through and these go live, the Poster Agent starts
+  respecting `scheduled_for` for real, and the dashboard's/bot's manual
+  "Mark posted" step retires.

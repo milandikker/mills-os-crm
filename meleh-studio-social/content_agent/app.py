@@ -1,23 +1,27 @@
 """
 Content Agent -- manual content dashboard (step c, v1).
 
-Meta and TikTok API approval is pending, so the Poster Agent can't
-actually publish anywhere yet -- it's still a stub. Until that's live,
-posting happens by hand: you write/draft the post here, then publish it
-yourself in the Instagram/TikTok app, then come back and mark it posted.
+Scheduled batch-publishing workflow: you create a week's worth of
+already-decided content at once (each with its own scheduled_for time),
+and the Telegram bot notifies you when each one's scheduled time
+arrives instead of the moment you create it. Meta/TikTok API approval
+is still pending, so posting still happens by hand at that point: you
+publish it yourself in the Instagram/TikTok app, then come back and
+mark it posted.
 
 Deliberately stays off the 'approved' status. The Poster Agent polls for
 'approved' rows and will (stub-)"publish" and mark them 'posted' on its
 own within the hour -- if this dashboard used 'approved' for "ready to
 post", the row would flip to 'posted' before you'd actually posted it
 anywhere real. So this dashboard only ever writes 'pending', 'posted', or
-'rejected' -- 'approved' stays reserved for when the full automated
-pipeline (Content Agent draft -> Telegram review -> real Poster Agent
-publish) is wired up later.
+'rejected' -- 'approved' stays reserved for once real publishing (step e)
+replaces the stubs, at which point the Poster Agent takes over this same
+scheduled_for time and posts for real without a manual click.
 """
 import hmac
 import os
 import time
+from datetime import datetime, timedelta
 from functools import wraps
 
 from dotenv import load_dotenv
@@ -82,12 +86,16 @@ def index():
     if status not in ("pending", "posted", "rejected", "all"):
         status = "pending"
 
+    # Scheduled (pending) items are most useful soonest-first; everything
+    # else (a history view) is most useful newest-first.
+    order_by = "scheduled_for ASC" if status == "pending" else "created_at DESC"
+
     with get_connection() as conn, dict_cursor(conn) as cur:
         if status == "all":
-            cur.execute("SELECT * FROM content_queue ORDER BY created_at DESC")
+            cur.execute(f"SELECT * FROM content_queue ORDER BY {order_by}")
         else:
             cur.execute(
-                "SELECT * FROM content_queue WHERE status = %s ORDER BY created_at DESC",
+                f"SELECT * FROM content_queue WHERE status = %s ORDER BY {order_by}",
                 (status,),
             )
         items = cur.fetchall()
@@ -106,6 +114,7 @@ def new_item():
     caption = request.form.get("caption", "").strip()
     media_note = request.form.get("media_note", "").strip() or None
     pasted_url = request.form.get("media_url", "").strip()
+    scheduled_for_raw = request.form.get("scheduled_for", "").strip()
 
     if platform not in PLATFORM_CONTENT_TYPES:
         flash("Choose a valid platform.")
@@ -115,6 +124,17 @@ def new_item():
         return redirect(url_for("new_item"))
     if not caption:
         flash("Caption is required.")
+        return redirect(url_for("new_item"))
+    if not scheduled_for_raw:
+        flash("Choose a scheduled date/time.")
+        return redirect(url_for("new_item"))
+    try:
+        # JS on the form converts the browser's local datetime-local value
+        # to a UTC ISO string before submit, so this is unambiguous
+        # regardless of what timezone you're actually in when posting.
+        scheduled_for = datetime.fromisoformat(scheduled_for_raw.replace("Z", "+00:00"))
+    except ValueError:
+        flash("Invalid scheduled date/time.")
         return redirect(url_for("new_item"))
 
     uploads = [f for f in request.files.getlist("media_file") if f and f.filename]
@@ -143,14 +163,14 @@ def new_item():
         cur.execute(
             """
             INSERT INTO content_queue
-                (platform, content_type, media_urls, media_note, caption, status, review_deadline)
-            VALUES (%s, %s, %s, %s, %s, 'pending', now() + interval '4 hours')
+                (platform, content_type, media_urls, media_note, caption, status, scheduled_for, review_deadline)
+            VALUES (%s, %s, %s, %s, %s, 'pending', %s, %s)
             """,
-            (platform, content_type, media_urls, media_note, caption),
+            (platform, content_type, media_urls, media_note, caption, scheduled_for, scheduled_for + timedelta(hours=4)),
         )
         conn.commit()
 
-    flash("Draft created.")
+    flash("Scheduled.")
     return redirect(url_for("index"))
 
 
