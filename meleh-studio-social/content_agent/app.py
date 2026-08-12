@@ -41,15 +41,18 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = os.environ["CONTENT_STUDIO_SECRET_KEY"]
 
-# 'reel'/'tiktok_video' -- exactly one video file.
-# 'static' -- one or more photos: a single photo, or a carousel when >1
-# (all three platforms support photo carousels, not just Instagram).
-VIDEO_CONTENT_TYPES = {"reel", "tiktok_video"}
+PLATFORMS = ["instagram", "facebook", "tiktok"]
 
-PLATFORM_CONTENT_TYPES = {
-    "instagram": ["reel", "static"],
-    "facebook": ["reel", "static"],
-    "tiktok": ["tiktok_video", "static"],
+# The dashboard asks for one simplified "kind" (what you're posting) per
+# draft, since the same media/caption/schedule is usually going out to
+# more than one platform at once -- this maps that kind to each
+# platform's actual content_type value. 'video' -- exactly one video
+# file. 'photo' -- one or more photos: a single photo, or a carousel
+# when >1 (all three platforms support photo carousels, not just
+# Instagram).
+KIND_CONTENT_TYPES = {
+    "video": {"instagram": "reel", "facebook": "reel", "tiktok": "tiktok_video"},
+    "photo": {"instagram": "static", "facebook": "static", "tiktok": "static"},
 }
 
 # Platforms with a real publisher (poster_agent/publishers/meta.py) --
@@ -121,20 +124,20 @@ def index():
 @require_auth
 def new_item():
     if request.method == "GET":
-        return render_template("new.html", platform_content_types=PLATFORM_CONTENT_TYPES)
+        return render_template("new.html", platforms=PLATFORMS)
 
-    platform = request.form.get("platform", "")
-    content_type = request.form.get("content_type", "")
+    platforms = [p for p in request.form.getlist("platforms") if p in PLATFORMS]
+    kind = request.form.get("kind", "")
     caption = request.form.get("caption", "").strip()
     media_note = request.form.get("media_note", "").strip() or None
     pasted_url = request.form.get("media_url", "").strip()
     scheduled_for_raw = request.form.get("scheduled_for", "").strip()
 
-    if platform not in PLATFORM_CONTENT_TYPES:
-        flash("Choose a valid platform.")
+    if not platforms:
+        flash("Choose at least one platform.")
         return redirect(url_for("new_item"))
-    if content_type not in PLATFORM_CONTENT_TYPES[platform]:
-        flash("Choose a valid content type for that platform.")
+    if kind not in KIND_CONTENT_TYPES:
+        flash("Choose whether this is a video or photo post.")
         return redirect(url_for("new_item"))
     if not caption:
         flash("Caption is required.")
@@ -153,10 +156,10 @@ def new_item():
 
     uploads = [f for f in request.files.getlist("media_file") if f and f.filename]
 
-    if content_type in VIDEO_CONTENT_TYPES and len(uploads) > 1:
-        flash("Reels/TikTok videos take a single video file, not multiple.")
+    if kind == "video" and len(uploads) > 1:
+        flash("Video posts take a single video file, not multiple.")
         return redirect(url_for("new_item"))
-    if content_type == "static" and len(uploads) > MAX_CAROUSEL_IMAGES:
+    if kind == "photo" and len(uploads) > MAX_CAROUSEL_IMAGES:
         flash(f"Max {MAX_CAROUSEL_IMAGES} photos per carousel.")
         return redirect(url_for("new_item"))
 
@@ -173,20 +176,25 @@ def new_item():
     if pasted_url:
         media_urls.append(pasted_url)
 
-    status = "approved" if platform in AUTO_PUBLISH_PLATFORMS else "pending"
-
+    # One row per selected platform, all sharing the same media/caption/
+    # schedule -- each platform still gets its own content_type value and
+    # its own independent status, so e.g. an Instagram row can auto-publish
+    # while its TikTok sibling still waits on a manual post.
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO content_queue
-                (platform, content_type, media_urls, media_note, caption, status, scheduled_for, review_deadline)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (platform, content_type, media_urls, media_note, caption, status, scheduled_for, scheduled_for + timedelta(hours=4)),
-        )
+        for platform in platforms:
+            content_type = KIND_CONTENT_TYPES[kind][platform]
+            status = "approved" if platform in AUTO_PUBLISH_PLATFORMS else "pending"
+            cur.execute(
+                """
+                INSERT INTO content_queue
+                    (platform, content_type, media_urls, media_note, caption, status, scheduled_for, review_deadline)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (platform, content_type, media_urls, media_note, caption, status, scheduled_for, scheduled_for + timedelta(hours=4)),
+            )
         conn.commit()
 
-    flash("Scheduled.")
+    flash(f"Scheduled to {', '.join(p.capitalize() for p in platforms)}.")
     return redirect(url_for("index"))
 
 

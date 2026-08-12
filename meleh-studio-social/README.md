@@ -380,6 +380,31 @@ made: creating a draft saves `approved` for instagram/facebook and
 correctly cancels one; the existing all-`pending` TikTok flow (mark
 posted, reject) is unchanged.
 
+## Status: one draft posts to multiple platforms at once
+
+Since most drafts go out to all three platforms together, "New draft"
+no longer asks for a single platform + its content_type. It now asks
+for:
+- **Platforms**: checkboxes for Instagram/Facebook/TikTok, all checked
+  by default -- uncheck any you don't want this draft going to.
+- **Post type**: Photo(s) or Video (Reel / TikTok video), replacing the
+  old per-platform content_type dropdown.
+
+Submitting inserts one `content_queue` row per checked platform, all
+sharing the same media/caption/`scheduled_for`, but each with its own
+`content_type` (derived from post type via `KIND_CONTENT_TYPES` in
+`content_agent/app.py`) and its own independent `status` -- e.g. one
+draft checked for all three creates an `approved` Instagram row, an
+`approved` Facebook row, and a `pending` TikTok row, each proceeding
+(or not) completely independently from here on. `PLATFORM_CONTENT_TYPES`
+is gone; `PLATFORMS` (`["instagram", "facebook", "tiktok"]`) is now the
+single source of truth for which platforms the form offers.
+
+Verified locally: checking all three platforms creates 3 rows with the
+correct platform/content_type/status combinations; unchecking one
+creates only the other two; submitting with none checked creates zero
+rows and redirects back with a validation message.
+
 ## Next steps
 
 - TikTok publishing (`poster_agent/publishers/tiktok.py`) -- still a

@@ -3,19 +3,23 @@
 
 <form method="post" enctype="multipart/form-data" class="new-form">
   <label>
-    Platform
-    <select name="platform" id="platform" required>
-      <option value="" disabled selected>Choose one</option>
-      {% for platform in platform_content_types %}
-        <option value="{{ platform }}">{{ platform | capitalize }}</option>
+    Platforms
+    <span class="hint">Posts to all checked platforms at once, from this one draft.</span>
+    <div class="checkbox-group">
+      {% for platform in platforms %}
+        <label class="checkbox-label">
+          <input type="checkbox" name="platforms" value="{{ platform }}" checked>
+          {{ platform | capitalize }}
+        </label>
       {% endfor %}
-    </select>
+    </div>
   </label>
 
   <label>
-    Content type
-    <select name="content_type" id="content_type" required>
-      <option value="" disabled selected>Choose a platform first</option>
+    Post type
+    <select name="kind" id="kind" required>
+      <option value="photo">Photo(s)</option>
+      <option value="video">Video (Reel / TikTok video)</option>
     </select>
   </label>
 
@@ -54,9 +58,7 @@
 </form>
 
 <script>
-var contentTypesByPlatform = {{ platform_content_types | tojson }};
-var platformSelect = document.getElementById("platform");
-var contentTypeSelect = document.getElementById("content_type");
+var platformCheckboxes = document.querySelectorAll('input[name="platforms"]');
 var mediaFileInput = document.getElementById("media_file");
 var fileCountLabel = document.getElementById("file-count");
 var scheduledLocalInput = document.getElementById("scheduled_for_local");
@@ -70,17 +72,6 @@ var scheduledHiddenInput = document.getElementById("scheduled_for_hidden");
     .slice(0, 16);
 })();
 
-platformSelect.addEventListener("change", function () {
-  var options = contentTypesByPlatform[platformSelect.value] || [];
-  contentTypeSelect.innerHTML = "";
-  options.forEach(function (value) {
-    var opt = document.createElement("option");
-    opt.value = value;
-    opt.textContent = value;
-    contentTypeSelect.appendChild(opt);
-  });
-});
-
 mediaFileInput.addEventListener("change", function () {
   var n = mediaFileInput.files.length;
   if (n === 0) {
@@ -92,7 +83,14 @@ mediaFileInput.addEventListener("change", function () {
   }
 });
 
-document.querySelector(".new-form").addEventListener("submit", function () {
+document.querySelector(".new-form").addEventListener("submit", function (e) {
+  var anyChecked = Array.prototype.some.call(platformCheckboxes, function (cb) { return cb.checked; });
+  if (!anyChecked) {
+    e.preventDefault();
+    alert("Choose at least one platform.");
+    return;
+  }
+
   // Convert the local wall-clock time the user picked into an
   // unambiguous UTC ISO string before it hits the server.
   scheduledHiddenInput.value = new Date(scheduledLocalInput.value).toISOString();

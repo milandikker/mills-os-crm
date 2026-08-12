@@ -152,6 +152,15 @@ header a { text-decoration: none; color: inherit; }
 .hint { color: var(--text-muted); font-weight: normal; }
 .or-divider { text-align: center; color: var(--text-muted); margin: 0; }
 
+.checkbox-group { display: flex; flex-direction: row; gap: 1.25rem; flex-wrap: wrap; }
+.new-form label.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
 @media (prefers-color-scheme: dark) {
   body { background: #121212; color: #eee; }
   .card, .new-form { background: #1e1e1e; border-color: #333; }
