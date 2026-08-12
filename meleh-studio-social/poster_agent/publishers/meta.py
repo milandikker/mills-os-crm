@@ -47,7 +47,7 @@ import time
 import requests
 
 GRAPH_API_BASE = "https://graph.facebook.com/v20.0"
-VIDEO_POLL_INTERVAL_SECONDS = 3
+VIDEO_POLL_INTERVAL_SECONDS = 5
 VIDEO_POLL_TIMEOUT_SECONDS = 120
 
 
@@ -72,18 +72,28 @@ def _graph_request(method, path, **params):
 
 
 def _wait_for_ig_media_ready(creation_id):
-    """IG video containers process asynchronously -- poll until FINISHED
-    before publishing, or raise on ERROR/EXPIRED/timeout."""
+    """IG containers process asynchronously -- poll until FINISHED before
+    publishing, or raise on ERROR/EXPIRED/timeout.
+
+    Always sleep before the *first* check too, not just between retries:
+    confirmed live that a photo container's status_code can report
+    FINISHED on the very first check (near-instant for images, unlike
+    video), which effectively skips any real wait -- and Meta's own
+    developer community documents "Media ID is not available" on
+    media_publish happening anyway right after, because the container
+    isn't actually ready yet even though status_code already says so.
+    A short unconditional delay first is the documented practical fix.
+    """
     elapsed = 0
     while elapsed < VIDEO_POLL_TIMEOUT_SECONDS:
+        time.sleep(VIDEO_POLL_INTERVAL_SECONDS)
+        elapsed += VIDEO_POLL_INTERVAL_SECONDS
         data = _graph_request("GET", creation_id, fields="status_code")
         status = data.get("status_code")
         if status == "FINISHED":
             return
         if status in ("ERROR", "EXPIRED"):
             raise RuntimeError(f"Instagram media processing failed: status_code={status}")
-        time.sleep(VIDEO_POLL_INTERVAL_SECONDS)
-        elapsed += VIDEO_POLL_INTERVAL_SECONDS
     raise RuntimeError("Instagram media processing timed out")
 
 
