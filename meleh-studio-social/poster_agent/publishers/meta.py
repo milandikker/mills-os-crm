@@ -29,6 +29,12 @@ Real publishing needs the media URLs to be reachable by Meta's servers
 -- that's why content_agent's /media/<filename> route no longer requires
 login (see content_agent/app.py): Graph API has no way to pass our HTTP
 basic auth credentials when it fetches image_url/video_url itself.
+
+Needs CONTENT_STUDIO_PUBLIC_URL too: content_queue.media_urls stores
+dashboard uploads as a relative path ("/media/xxx.png"), which only
+means something inside our own Flask app. Meta's servers need a
+complete, publicly fetchable URL, so every relative path gets that
+public base URL prefixed before it's sent -- see _absolute_media_url.
 """
 import json
 import os
@@ -39,6 +45,13 @@ import requests
 GRAPH_API_BASE = "https://graph.facebook.com/v20.0"
 VIDEO_POLL_INTERVAL_SECONDS = 3
 VIDEO_POLL_TIMEOUT_SECONDS = 120
+
+
+def _absolute_media_url(url):
+    if url.startswith("/media/"):
+        base = os.environ["CONTENT_STUDIO_PUBLIC_URL"].rstrip("/")
+        return f"{base}{url}"
+    return url
 
 
 def _graph_request(method, path, **params):
@@ -72,7 +85,7 @@ def _wait_for_ig_media_ready(creation_id):
 
 def _ig_publish(row):
     ig_id = os.environ["META_IG_BUSINESS_ID"]
-    media_urls = row["media_urls"] or []
+    media_urls = [_absolute_media_url(u) for u in (row["media_urls"] or [])]
     caption = row["caption"]
 
     if row["content_type"] == "reel":
@@ -112,7 +125,7 @@ def _ig_publish(row):
 
 def _fb_publish(row):
     page_id = os.environ["META_PAGE_ID"]
-    media_urls = row["media_urls"] or []
+    media_urls = [_absolute_media_url(u) for u in (row["media_urls"] or [])]
     caption = row["caption"]
 
     if row["content_type"] == "reel":
