@@ -18,7 +18,7 @@
       <div class="card-header">
         <span class="platform">{{ item.platform }}</span>
         <span class="content-type">{{ item.content_type }}</span>
-        <span class="status status-{{ item.status }}">{{ 'scheduled' if item.status == 'pending' else item.status }}</span>
+        <span class="status status-{{ item.status }}">{{ 'scheduled' if item.status in ('pending', 'approved') else item.status }}</span>
       </div>
 
       {% if item.media_urls %}
@@ -48,7 +48,7 @@
 
       <p class="meta">
         #{{ item.id }}
-        {% if item.status == "pending" %}
+        {% if item.status in ("pending", "approved") %}
           &middot; scheduled for {{ item.scheduled_for.strftime('%b %-d, %I:%M %p') }}
         {% else %}
           &middot; created {{ item.created_at.strftime('%b %-d, %I:%M %p') }}
@@ -62,6 +62,13 @@
           </form>
           <form method="post" action="{{ url_for('mark_rejected', item_id=item.id) }}">
             <button type="submit" class="button reject-btn">Reject</button>
+          </form>
+        </div>
+      {% elif item.status == "approved" %}
+        <div class="actions">
+          <p class="media-note">Publishes automatically at the scheduled time.</p>
+          <form method="post" action="{{ url_for('mark_rejected', item_id=item.id) }}">
+            <button type="submit" class="button reject-btn">Cancel</button>
           </form>
         </div>
       {% endif %}

@@ -86,8 +86,10 @@ header a { text-decoration: none; color: inherit; }
   text-transform: capitalize;
 }
 .status-pending { background: #d97706; color: #fff; }
+.status-approved { background: #d97706; color: #fff; }
 .status-posted { background: #16a34a; color: #fff; }
 .status-rejected { background: #dc2626; color: #fff; }
+.status-failed { background: #dc2626; color: #fff; }
 
 .card img, .card video {
   width: 100%;

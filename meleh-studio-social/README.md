@@ -351,6 +351,35 @@ Once this is confirmed working live, `scheduled_for` takes over for
 real (Poster Agent already respects it), and the dashboard's/bot's
 manual "Mark posted" step retires for Instagram/Facebook.
 
+## Status: dashboard auto-publishes Instagram/Facebook drafts
+
+With real Meta publishing confirmed live, `content_agent/app.py` now
+saves new Instagram/Facebook drafts straight to `approved` instead of
+`pending` (`AUTO_PUBLISH_PLATFORMS = {"instagram", "facebook"}`) -- the
+Poster Agent picks them up at their `scheduled_for` time and publishes
+for real, no manual click needed. TikTok drafts still save as `pending`
+and keep the old manual publish-yourself-then-"I posted this" flow,
+since `poster_agent/publishers/tiktok.py` is still a stub -- flipping
+TikTok to `approved` too would let the stub falsely mark a draft
+"posted" with no real post having happened.
+
+The "Scheduled" tab now lists both kinds of not-yet-resolved draft
+(`pending` and `approved`) together, soonest-first, so the whole
+week's batch stays visible in one place regardless of platform.
+Rejecting (cancelling) now works on `approved` rows too, so an
+auto-publish post can still be pulled before its scheduled time hits.
+Approved cards show "Publishes automatically at the scheduled time"
+instead of the "I posted this" button, since clicking it wouldn't do
+anything for an auto-publish row (`mark_posted` still only touches
+`pending` rows -- that action stays reserved for the manual TikTok flow).
+
+Verified locally against a real (throwaway) Postgres, no Meta calls
+made: creating a draft saves `approved` for instagram/facebook and
+`pending` for tiktok; the Scheduled tab returns rows of both statuses;
+`mark_posted` correctly no-ops on an `approved` row; `mark_rejected`
+correctly cancels one; the existing all-`pending` TikTok flow (mark
+posted, reject) is unchanged.
+
 ## Next steps
 
 - TikTok publishing (`poster_agent/publishers/tiktok.py`) -- still a

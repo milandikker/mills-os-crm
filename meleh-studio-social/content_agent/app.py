@@ -9,14 +9,14 @@ is still pending, so posting still happens by hand at that point: you
 publish it yourself in the Instagram/TikTok app, then come back and
 mark it posted.
 
-Deliberately stays off the 'approved' status. The Poster Agent polls for
-'approved' rows and will (stub-)"publish" and mark them 'posted' on its
-own within the hour -- if this dashboard used 'approved' for "ready to
-post", the row would flip to 'posted' before you'd actually posted it
-anywhere real. So this dashboard only ever writes 'pending', 'posted', or
-'rejected' -- 'approved' stays reserved for once real publishing (step e)
-replaces the stubs, at which point the Poster Agent takes over this same
-scheduled_for time and posts for real without a manual click.
+Step (e) real Meta publishing is live, so Instagram/Facebook drafts now
+save straight to 'approved': the Poster Agent picks them up at
+scheduled_for and posts for real, no manual click needed. TikTok still
+only has a stub publisher (see poster_agent/publishers/tiktok.py), so
+TikTok drafts still save as 'pending' and need the old manual
+publish-yourself-then-click-"I posted this" flow -- flipping TikTok to
+'approved' too would make the stub falsely mark it "posted" without any
+real post happening.
 """
 import hmac
 import os
@@ -52,6 +52,12 @@ PLATFORM_CONTENT_TYPES = {
     "tiktok": ["tiktok_video", "static"],
 }
 
+# Platforms with a real publisher (poster_agent/publishers/meta.py) --
+# their drafts save straight to 'approved' for automatic scheduled
+# publishing. Platforms not listed here still save as 'pending' for the
+# manual publish-yourself-then-mark-posted flow.
+AUTO_PUBLISH_PLATFORMS = {"instagram", "facebook"}
+
 
 def require_auth(view):
     @wraps(view)
@@ -86,13 +92,21 @@ def index():
     if status not in ("pending", "posted", "rejected", "all"):
         status = "pending"
 
-    # Scheduled (pending) items are most useful soonest-first; everything
-    # else (a history view) is most useful newest-first.
+    # Scheduled items are most useful soonest-first; everything else (a
+    # history view) is most useful newest-first.
     order_by = "scheduled_for ASC" if status == "pending" else "created_at DESC"
 
     with get_connection() as conn, dict_cursor(conn) as cur:
         if status == "all":
             cur.execute(f"SELECT * FROM content_queue ORDER BY {order_by}")
+        elif status == "pending":
+            # The "Scheduled" tab covers both not-yet-resolved kinds of
+            # draft: 'pending' (manual TikTok flow) and 'approved'
+            # (auto-publish Instagram/Facebook flow, waiting for its
+            # scheduled_for time).
+            cur.execute(
+                f"SELECT * FROM content_queue WHERE status IN ('pending', 'approved') ORDER BY {order_by}"
+            )
         else:
             cur.execute(
                 f"SELECT * FROM content_queue WHERE status = %s ORDER BY {order_by}",
@@ -159,14 +173,16 @@ def new_item():
     if pasted_url:
         media_urls.append(pasted_url)
 
+    status = "approved" if platform in AUTO_PUBLISH_PLATFORMS else "pending"
+
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             """
             INSERT INTO content_queue
                 (platform, content_type, media_urls, media_note, caption, status, scheduled_for, review_deadline)
-            VALUES (%s, %s, %s, %s, %s, 'pending', %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (platform, content_type, media_urls, media_note, caption, scheduled_for, scheduled_for + timedelta(hours=4)),
+            (platform, content_type, media_urls, media_note, caption, status, scheduled_for, scheduled_for + timedelta(hours=4)),
         )
         conn.commit()
 
@@ -192,9 +208,12 @@ def mark_posted(item_id):
 @require_auth
 def mark_rejected(item_id):
     with get_connection() as conn, conn.cursor() as cur:
+        # Includes 'approved' so an auto-publish Instagram/Facebook draft
+        # can still be cancelled before its scheduled_for time triggers
+        # the Poster Agent to publish it for real.
         cur.execute(
             "UPDATE content_queue SET status = 'rejected' "
-            "WHERE id = %s AND status = 'pending'",
+            "WHERE id = %s AND status IN ('pending', 'approved')",
             (item_id,),
         )
         conn.commit()
