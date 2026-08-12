@@ -4,13 +4,17 @@ Real publisher for Instagram and Facebook via the Meta Graph API.
 Needs from .env: META_GRAPH_API_TOKEN (long-lived Page access token),
 META_PAGE_ID, META_IG_BUSINESS_ID.
 
-Instagram (Content Publishing API):
-  static (1 photo)   -> POST {ig-id}/media (image_url) -> media_publish
+Instagram (Content Publishing API). Every path polls status_code until
+FINISHED before publishing, not just video -- confirmed by a real photo
+post failing with "Media ID is not available" when published
+immediately after container creation; Meta's own guidance is to always
+confirm readiness first, images included:
+  static (1 photo)   -> POST {ig-id}/media (image_url) -> wait -> media_publish
   static (2+ photos) -> POST {ig-id}/media per photo (is_carousel_item)
                          -> POST {ig-id}/media (media_type=CAROUSEL,
-                            children=<ids>) -> media_publish
+                            children=<ids>) -> wait -> media_publish
   reel (video)        -> POST {ig-id}/media (media_type=REELS, video_url)
-                         -> poll until processing FINISHED -> media_publish
+                         -> wait (longer, real video processing) -> media_publish
 Docs: https://developers.facebook.com/docs/instagram-platform/content-publishing
 
 Facebook (Page):
@@ -96,7 +100,6 @@ def _ig_publish(row):
             media_type="REELS", video_url=media_urls[0], caption=caption,
         )
         creation_id = container["id"]
-        _wait_for_ig_media_ready(creation_id)
     elif len(media_urls) > 1:
         child_ids = []
         for url in media_urls:
@@ -119,6 +122,10 @@ def _ig_publish(row):
         )
         creation_id = container["id"]
 
+    # Even photo containers can need a moment to finish processing before
+    # they're publishable, not just video -- Meta's own recommended
+    # practice is to always confirm status_code=FINISHED first.
+    _wait_for_ig_media_ready(creation_id)
     published = _graph_request("POST", f"{ig_id}/media_publish", creation_id=creation_id)
     return published["id"]
 
