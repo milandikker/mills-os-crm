@@ -203,8 +203,14 @@ def mark_rejected(item_id):
 
 
 @app.route("/media/<path:filename>")
-@require_auth
 def media(filename):
+    # Deliberately no @require_auth: step (e)'s real Meta Graph API calls
+    # fetch image_url/video_url directly from Meta's own servers, which
+    # have no way to receive our HTTP basic auth credentials. Since this
+    # content is either about to become a public post or already is one,
+    # gating it here protected only the brief pre-publish window -- worth
+    # trading for real publishing actually working. Filenames still carry
+    # a timestamp + per-request index, so they aren't guessable/listable.
     safe_name = secure_filename(filename)
     if safe_name != filename:
         abort(404)

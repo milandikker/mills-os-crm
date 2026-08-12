@@ -288,12 +288,74 @@ in the past is correctly included; missing/invalid scheduled times are
 rejected without creating a row; `review_deadline` derives correctly
 from `scheduled_for`.
 
+## Status: real Meta (Instagram + Facebook) publishing is live
+
+`poster_agent/publishers/meta.py` is no longer a stub -- it calls the
+real Meta Graph API. Needs `META_GRAPH_API_TOKEN` (long-lived Page
+access token), `META_PAGE_ID`, `META_IG_BUSINESS_ID` in `.env`.
+
+Getting a working token took two real fixes worth remembering:
+1. **App-level permissions**: `pages_read_engagement`, `pages_manage_posts`,
+   `instagram_basic`, `instagram_content_publishing` all had to be
+   explicitly added via the App Dashboard's Use Cases section (My Apps
+   > [app] > Use cases > Manage Pages / Manage content on Instagram >
+   "+Add" per permission) before Graph API Explorer would even offer
+   them as selectable scopes -- regenerating tokens without this never
+   helps, the app itself has to have the permission enabled first.
+2. **Long-lived token exchange**: Graph API Explorer's default token is
+   short-lived (~hours). Exchange it for a long-lived one
+   (`GET /oauth/access_token?grant_type=fb_exchange_token&client_id=...
+   &client_secret=...&fb_exchange_token=...`, needs the App Secret from
+   App Dashboard > Settings > Basic) *before* deriving the Page token
+   via `/me/accounts` -- a Page token derived from a short-lived User
+   token is also short-lived, but one derived from a long-lived User
+   token doesn't expire.
+
+Publish paths implemented, per `content_type` and photo count:
+- Instagram: static (1 photo) -> media container + publish; static
+  (2+ photos) -> per-photo carousel-item containers + one CAROUSEL
+  container + publish; reel -> video container, poll `status_code`
+  until `FINISHED` (video processing is async), then publish.
+- Facebook: static (1 photo) -> `/photos`; static (2+ photos) -> each
+  photo uploaded unpublished, then one `/feed` post with
+  `attached_media`; reel -> `/videos` (a regular Page video upload, not
+  the dedicated Reels-placement API -- revisit if Reels-specific
+  placement matters later); no media -> plain text `/feed` post.
+
+`content_agent`'s `/media/<filename>` route no longer requires login --
+Meta's servers fetch `image_url`/`video_url` directly and have no way
+to receive our HTTP basic auth, so gating it only protected the brief
+pre-publish window on content that's about to become a public post
+anyway. The dashboard itself and every other route are still fully
+protected.
+
+`content_queue.platform_post_id` (new, `migrations/006_...`) records
+the real published post ID once the Poster Agent successfully posts,
+alongside the existing `status`/`posted_at`.
+
+Verified locally with every Graph API call mocked (no real network,
+nothing published): single-photo, carousel, and reel (including the
+async status-polling loop and its error/timeout paths) all build the
+correct requests for both Instagram and Facebook, including the
+multi-photo Facebook `attached_media` encoding; a Graph API error
+response correctly raises and is caught by the Poster Agent's existing
+retry/fail handling; the full pipeline (approved row -> publish ->
+`platform_post_id` stored, `status` -> `posted`) was verified against a
+real Postgres with the actual network call mocked out. **The real
+network call itself was never made from here** -- that's not something
+that can be safely test-fired without actually publishing, so the
+first live call is the real test, done together, watching one small
+clearly-marked post go out.
+
+Once this is confirmed working live, `scheduled_for` takes over for
+real (Poster Agent already respects it), and the dashboard's/bot's
+manual "Mark posted" step retires for Instagram/Facebook.
+
 ## Next steps
 
-- **(e) TODO stubs** -- OpenAI captions, Runway image/video gen (chosen
-  over Higgsfield -- reliability issues seen using Higgsfield via
-  ChatGPT), Meta Graph API publishing (`poster_agent/publishers/meta.py`),
-  TikTok publishing (`poster_agent/publishers/tiktok.py`). Once Meta/TikTok
-  approval comes through and these go live, the Poster Agent starts
-  respecting `scheduled_for` for real, and the dashboard's/bot's manual
-  "Mark posted" step retires.
+- TikTok publishing (`poster_agent/publishers/tiktok.py`) -- still a
+  stub, blocked on TikTok's own audit (or the Higgsfield-connected-
+  account shortcut, see the file's docstring).
+- OpenAI captions, Runway image/video generation -- for your own
+  weekly batch-creation session, not backend automation (see the
+  scheduler-first architecture decision above).

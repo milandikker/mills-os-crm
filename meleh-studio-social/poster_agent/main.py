@@ -60,15 +60,15 @@ def fetch_approved_rows(conn, limit=10):
         return cur.fetchall()
 
 
-def mark_posted(conn, row_id):
+def mark_posted(conn, row_id, platform_post_id=None):
     with conn.cursor() as cur:
         cur.execute(
             """
             UPDATE content_queue
-            SET status = 'posted', posted_at = now()
+            SET status = 'posted', posted_at = now(), platform_post_id = %s
             WHERE id = %s
             """,
-            (row_id,),
+            (platform_post_id, row_id),
         )
 
 
@@ -92,8 +92,10 @@ def mark_failed(conn, row_id, error_message, prior_retry_count):
 
 
 def publish(row):
-    """Look up the right stub publisher for this row's platform and call it.
+    """Look up the right publisher for this row's platform and call it.
     Raises ValueError for a platform with no publisher registered.
+    Returns the platform's real post ID (str), or None if unavailable
+    (e.g. a still-stubbed platform).
     """
     publisher = PUBLISHERS.get(row["platform"])
     if publisher is None:
@@ -118,10 +120,10 @@ def run_once():
                 f"platform={row['platform']} content_type={row['content_type']}"
             )
             try:
-                publish(row)
-                mark_posted(conn, row["id"])
+                platform_post_id = publish(row)
+                mark_posted(conn, row["id"], platform_post_id=platform_post_id)
                 conn.commit()
-                print(f"[poster_agent] id={row['id']} -> posted")
+                print(f"[poster_agent] id={row['id']} -> posted (platform_post_id={platform_post_id})")
             except Exception as exc:
                 next_status, new_retry_count = mark_failed(
                     conn, row["id"], exc, row["retry_count"]

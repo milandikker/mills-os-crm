@@ -23,12 +23,12 @@ def publish(row):
     """Pretend to publish a TikTok video.
 
     `row` is a dict-like content_queue row (see shared/db.py dict_cursor).
-    Returns a small result dict -- real version will return TikTok's
-    published post ID here instead of None.
+    Returns TikTok's real post ID once this is a real implementation;
+    None for now since it's still a stub.
     """
     media_description = row["media_urls"] or row["media_note"]
     print(
         f"[tiktok stub] Would publish {row['content_type']} to TikTok | "
         f"media={media_description!r} | caption={row['caption'][:60]!r}..."
     )
-    return {"stub": True, "platform_post_id": None}
+    return None
